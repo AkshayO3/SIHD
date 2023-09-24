@@ -1,75 +1,58 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import csv from 'csv-parser';
-import mongodb from 'mongodb';
-const MongoClient = mongodb.MongoClient;
+import dotenv from "dotenv";
+import { MongoClient } from "mongodb";
 dotenv.config();
-const app = express();
-app.set("view engine", "ejs");
-const url = process.env.URI2;
-const dbName = 'AICTE';
-const collection = 'universities';
-app.get("/",(req,res)=>{
-  res.render("home");
-})
-app.post("/",(req,res)=> {
-    console.log("0")
-    MongoClient.connect(url, (err, client) => {
-        if (err) {
-            console.error("Error connecting to mongodb:", err);
-            return;
-        }
-        console.log("1");
-        const db = client.db(dbName);
-        const universities = db.collection(collection);
-        fs.createReadStream('universities.csv')
-            .pipe(csv())
-            .on('data', (row) => {
-                const academicYear = row['Academic Year'];
-                const universityName = row['Name'];
-                collection.findOne({universityName: universityName}, (err, existingDocument) => {
-                    if (err) {
-                        console.error("Error finding document:", err);
-                        return;
-                    }
-                    console.log("2");
-                    if (existingDocument) {
-                        collection.updateOne(
-                            {_id: existingDocument._id},
-                            {
-                                $push: {
-                                    history: {
-                                        academic_year: academicYear,
-                                    },
-                                },
-                            }, (err) => {
-                                if (err) {
-                                    console.error("Error updating document:", err);
-                                }
-                            })
-                        console.log("2");
-                    } else {
-                        collection.insertOne({
-                            universityName: universityName,
-                            history: [
-                                {
-                                    academic_year: academicYear,
-                                }]
-                        }, (err) => {
-                            if (err) {
-                                console.error("Error inserting document:", err);
-                            }
-                        })
-                    }
-                    console.log("2");
-                })
-            }).on('end', () => {
-            console.log('CSV file successfully processed');
-            client.close();
+import fs from 'fs';
+import csv from "csv-parser";
+
+const uri = process.env.URI2;
+const client = new MongoClient(uri);
+let name,id,add,district,ins,women,minority,academicYear;
+async function run() {
+    try {
+        const database = client.db("AICTE");
+        const haiku = database.collection("universities");
+        fs.createReadStream('/users/akshay/downloads/universities1.csv')
+            .pipe(csv()).on('data', async(row) => {
+             name = row['Name'];
+             id = row['AICTE ID'];
+             add = row['Address'];
+             district = row['District'];
+             ins = row['Institution Type'];
+             women = row['Women'];
+             minority = row['Minority'];
+             academicYear = row['Academic Year'];
+            console.log(academicYear);
         });
-    }).then(() =>console.log("Successful") );
-})
-app.listen(3000, () => {
-    console.log("Server is running on port 3000");
-})
+        const query = {"Academic Year": academicYear};
+        const result = await haiku.findOne(query);
+        if (result) {
+            console.log(result);
+            const res2 = await haiku.updateOne(
+                {_id: result._id},
+                {$push: {history: academicYear}},
+                (err) => {
+                    if (err) console.log("Error updating");
+                }
+            );
+            console.log(res2);
+        } else {
+            console.log("Insertion initiated");
+            const res3 = await haiku.insertOne({
+                "Name": name,
+                "AICTE ID": id,
+                "Address": add,
+                "District": district,
+                "Institution Type": ins,
+                "Women": women,
+                "Minority": minority,
+                "history": [academicYear]
+            }, (err) => {
+                if (err) console.log("Error inserting");
+            })
+        }
+    } finally {
+        await client.close();
+    }
+}
+// Run the function and handle any errors
+run().catch(console.dir);
