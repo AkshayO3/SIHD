@@ -1,14 +1,12 @@
 import fs from 'fs';
 import csv from 'csv-parser';
 
-let inputFilePath = '/users/akshay/downloads/universities1.csv'; // Replace with your CSV file path
-const outputFilePath = '/users/akshay/downloads/output.csv'; // Replace with your desired output file path
-let nToDelete = "1-36515461851" ; // Replace with the ID you want to delete
+let inputFilePath = '/users/akshay/downloads/universities1.csv';
+const outputFilePath = '/users/akshay/downloads/output.csv';
+let nToDelete = "1-36515461851" ;
 let yToDelete="2019-20";
 
 const rowsToDelete = [];
-
-// Read the CSV file and collect rows to delete
 fs.createReadStream(inputFilePath)
     .pipe(csv())
     .on('data', (row) => {
@@ -17,7 +15,6 @@ fs.createReadStream(inputFilePath)
         }
     })
     .on('end', () => {
-        // Write the remaining rows to the output file
         const writeStream = fs.createWriteStream(outputFilePath);
         const headerRow = Object.keys(rowsToDelete[0]).map((key) => `"${key}"`).join(',');
         writeStream.write(headerRow + '\n');
