@@ -20,7 +20,7 @@ async function run() {
     try {
         const database = client.db("AICTE");
         const haiku = database.collection("universities");
-        // while(shouldContinue){
+        while(shouldContinue){
             for await (const row of readCSV('/users/akshay/downloads/universities1.csv')) {
                 name = row['Name'];
                 id = row['AICTE ID'];
@@ -59,7 +59,7 @@ async function run() {
                     if (err) console.log("Error inserting");
                 })
             }
-        // }
+        }
         shouldContinue= false;
     } finally {
         await client.close();
