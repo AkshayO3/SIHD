@@ -2,9 +2,9 @@ import fs from 'fs';
 import csv from 'csv-parser';
 
 let inputFilePath = '/users/akshay/downloads/universities1.csv'; // Replace with your CSV file path
-const outputFilePath = 'output.csv'; // Replace with your desired output file path
-let nToDelete = "1-3323376128" ; // Replace with the ID you want to delete
-let yToDelete="2015-16";
+const outputFilePath = '/users/akshay/downloads/output.csv'; // Replace with your desired output file path
+let nToDelete = "1-36515461851" ; // Replace with the ID you want to delete
+let yToDelete="2019-20";
 
 const rowsToDelete = [];
 
@@ -26,9 +26,10 @@ fs.createReadStream(inputFilePath)
             const rowValues = Object.values(row).map((value) => `"${value}"`).join(',');
             writeStream.write(rowValues + '\n');
         }
-        writeStream.end();
-
-        // Rename the output file to overwrite the original CSV file
-        inputFilePath=outputFilePath;
-        console.log(`Row with ID ${nToDelete} ${yToDelete} deleted successfully and CSV file updated.`);
+        writeStream.end(() => {
+            fs.rename(outputFilePath, inputFilePath, (err) => {
+                console.log(err);
+            })
+            console.log(`Row with ID ${nToDelete} ${yToDelete} deleted successfully and CSV file updated.`);
+        });
     });
